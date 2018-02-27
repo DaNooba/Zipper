@@ -12,6 +12,7 @@ namespace DOC_ZIP
     class Program
     {
         const string strPath = @".\log\Log.txt";
+        static Lazy<StreamWriter> logWriter = new Lazy<StreamWriter>(() => File.CreateText(strPath)); // oooooooooh, ooooooooooooooooooooooooooooooooooh
 
         static void Main(string[] args)
         {
@@ -92,10 +93,7 @@ namespace DOC_ZIP
         /// </summary>
         public static void ErrorLogging(Exception ex)
         {
-            using (StreamWriter sw = File.CreateText(strPath))
-            {
-                WriteException(ex, sw);
-            }
+            WriteException(ex, logWriter.Value);
         }
 
         public static void WriteException(Exception ex, TextWriter sw)
@@ -105,18 +103,6 @@ namespace DOC_ZIP
             sw.WriteLine($"Error Message: {ex.Message}");
             sw.WriteLine($"Stack Trace: {ex.StackTrace}");
             sw.WriteLine("===========End============= ");
-        }
-
-        public static void ReadError()
-        {
-            using (StreamReader sr = new StreamReader(strPath))
-            {
-                string line;
-                while ((line = sr.ReadLine()) != null)
-                {
-                    Console.WriteLine(line);
-                }
-            }
         }
     }
 }
