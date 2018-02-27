@@ -11,20 +11,22 @@ namespace DOC_ZIP
 {
     class Program
     {
+        const string strPath = @".\log\Log.txt";
+
         static void Main(string[] args)
         {
             string key;
 
-            /// Load XML
+            // Load XML
             string xmlPath = @".\config\config.xml";
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(File.ReadAllText(xmlPath));
 
-            /// Get nodes
+            // Get nodes
             XmlNodeList list = doc.DocumentElement.SelectNodes("//Path");
             List<string> zipDirs = new List<string>();
 
-            /// Save paths to list
+            // Save paths to list
             foreach (XmlNode node in list)
             {
                 key = node.SelectSingleNode("dir").InnerText;
@@ -35,56 +37,78 @@ namespace DOC_ZIP
                 }
             }
 
+            Console.WriteLine(zipDirs.Count);
+
             for (int i = 0; i < zipDirs.Count; i++)
             {
                 try
                 {
-                    /// Parent dir of target dirs goes here
+                    // Parent dir of target dirs goes here
                     string DS = zipDirs.ElementAt(index: i);
                     if (Directory.Exists(DS))
                     {
+                        Console.WriteLine(DS);
+
                         string[] filesArray = Directory.GetDirectories(DS);
-                        foreach (string s in filesArray)
+                        Parallel.ForEach(filesArray, s =>
                         {
-                            /// Check if zip file already exists
-                            if (!File.Exists(DS + s + ".zip"))
+                            var path = Path.Combine(DS, s);
+                            var zipPath = path + ".zip";
+                            Console.WriteLine(path);
+                            Console.WriteLine(zipPath);
+
+                            // Check if zip file already exists
+                            if (!File.Exists(zipPath))
                             {
-                                /// Create zip file
-                                ZipFile.CreateFromDirectory(DS + s, DS + s + ".zip");
+                                // Create zip file
+                                ZipFile.CreateFromDirectory(path, zipPath);
                             }
-                        }
+                        });
                     }
                 }
                 catch (Exception ex)
                 {
+                    WriteException(ex, Console.Out);
                     ErrorLogging(ex);
-                    ReadError();
                 }
             }
         }
 
+        public static bool CheckFiles(DirectoryInfo info, FileInfo fileInfo)
+        {
+            foreach (FileInfo file in info.EnumerateFileSystemInfos())
+            {
+                if (file.LastWriteTime.Ticks > fileInfo.LastWriteTime.Ticks)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Error Handling
+        /// </summary>
         public static void ErrorLogging(Exception ex)
         {
-            string strPath = @".\log\Log.txt";
-            if (!File.Exists(strPath))
+            using (StreamWriter sw = File.CreateText(strPath))
             {
-                File.Create(strPath).Dispose();
+                WriteException(ex, sw);
             }
-            using (StreamWriter sw = File.AppendText(strPath))
-            {
-                sw.WriteLine("=============Error Logging ===========");
-                sw.WriteLine("===========Start============= " + DateTime.Now);
-                sw.WriteLine("Error Message: " + ex.Message);
-                sw.WriteLine("Stack Trace: " + ex.StackTrace);
-                sw.WriteLine("===========End============= " + DateTime.Now);
+        }
 
-            }
+        public static void WriteException(Exception ex, TextWriter sw)
+        {
+            sw.WriteLine("=============Error Logging ===========");
+            sw.WriteLine($"===========Start============= {DateTime.Now}");
+            sw.WriteLine($"Error Message: {ex.Message}");
+            sw.WriteLine($"Stack Trace: {ex.StackTrace}");
+            sw.WriteLine("===========End============= ");
         }
 
         public static void ReadError()
         {
-            string strPath = @"\log\Log.txt";
             using (StreamReader sr = new StreamReader(strPath))
             {
                 string line;
