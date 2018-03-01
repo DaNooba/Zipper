@@ -11,8 +11,10 @@ namespace DOC_ZIP
 {
     class Program
     {
+        // Path to error log
         const string strPath = @".\log\Log.txt";
-        static Lazy<StreamWriter> logWriter = new Lazy<StreamWriter>(() => File.CreateText(strPath)); // oooooooooh, ooooooooooooooooooooooooooooooooooh
+        // Load lazy streamwriter
+        static Lazy<StreamWriter> logWriter = new Lazy<StreamWriter>(() => File.CreateText(strPath)); 
 
         static void Main(string[] args)
         {
@@ -38,8 +40,6 @@ namespace DOC_ZIP
                 }
             }
 
-            Console.WriteLine(zipDirs.Count);
-
             for (int i = 0; i < zipDirs.Count; i++)
             {
                 try
@@ -48,21 +48,26 @@ namespace DOC_ZIP
                     string DS = zipDirs.ElementAt(index: i);
                     if (Directory.Exists(DS))
                     {
-                        Console.WriteLine(DS);
-
                         string[] filesArray = Directory.GetDirectories(DS);
                         Parallel.ForEach(filesArray, s =>
                         {
                             var path = Path.Combine(DS, s);
                             var zipPath = path + ".zip";
-                            Console.WriteLine(path);
-                            Console.WriteLine(zipPath);
 
                             // Check if zip file already exists
                             if (!File.Exists(zipPath))
                             {
                                 // Create zip file
                                 ZipFile.CreateFromDirectory(path, zipPath);
+                            }
+                            else
+                            {
+                                // Check if the folder has been modified since 
+                                if (CheckFiles(path, zipPath))
+                                {
+                                    File.Delete(zipPath);
+                                    ZipFile.CreateFromDirectory(path, zipPath);
+                                }
                             }
                         });
                     }
@@ -75,22 +80,30 @@ namespace DOC_ZIP
             }
         }
 
-        public static bool CheckFiles(DirectoryInfo info, FileInfo fileInfo)
+        /// <summary>
+        /// Checks folder against dir, returns true if folder is newer
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="zipPath"></param>
+        /// <returns></returns>
+        public static bool CheckFiles(String path, String zipPath)
         {
-            foreach (FileInfo file in info.EnumerateFileSystemInfos())
+            var t1 = Directory.GetLastWriteTime(path);
+            var t2 = File.GetCreationTime(zipPath);
+
+            if (DateTime.Compare(t1, t2) > 0)
             {
-                if (file.LastWriteTime.Ticks > fileInfo.LastWriteTime.Ticks)
-                {
-                    return true;
-                }
+                return true;
             }
 
             return false;
         }
 
         /// <summary>
-        /// Error Handling
+        /// Error Handling:
+        /// Writes error to specified file
         /// </summary>
+        /// <param name="ex"></param>
         public static void ErrorLogging(Exception ex)
         {
             WriteException(ex, logWriter.Value);
