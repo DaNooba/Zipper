@@ -95,7 +95,10 @@ namespace DOC_ZIP
                 string[] subDirectories = Directory.GetDirectories(path);
                 foreach (string dir in subDirectories)
                 {
-                    CheckFiles(dir, zipPath);
+                    if(CheckFiles(dir, zipPath))
+                    {
+                        return true;
+                    }
                 }
             }
 
