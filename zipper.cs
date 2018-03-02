@@ -88,8 +88,22 @@ namespace DOC_ZIP
         /// <returns></returns>
         public static bool CheckFiles(String path, String zipPath)
         {
+            // Check for subdirectories
+            if (Directory.GetDirectories(path).Length > 0)
+            {
+                // Recursively iterate through subdirectories
+                string[] subDirectories = Directory.GetDirectories(path);
+                foreach (string dir in subDirectories)
+                {
+                    if(CheckFiles(dir, zipPath))
+                    {
+                        return true;
+                    }
+                }
+            }
+
             var t1 = Directory.GetLastWriteTime(path);
-            var t2 = File.GetCreationTime(zipPath);
+            var t2 = File.GetLastWriteTime(zipPath);
 
             if (DateTime.Compare(t1, t2) > 0)
             {
