@@ -103,10 +103,16 @@ namespace DOC_ZIP
             }
 
             var t1 = Directory.GetLastWriteTime(path);
-            var t2 = File.GetCreationTime(zipPath);
+            var t2 = File.GetLastWriteTime(zipPath);
 
             if (DateTime.Compare(t1, t2) > 0)
             {
+                var t3 = t1.ToString();
+                var t4 = t2.ToString();
+
+                Console.WriteLine("Dir: " + path + " " + t3);
+                Console.WriteLine("File: " + zipPath + " " + t4);
+                Console.ReadKey();
                 return true;
             }
 
