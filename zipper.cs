@@ -107,12 +107,6 @@ namespace DOC_ZIP
 
             if (DateTime.Compare(t1, t2) > 0)
             {
-                var t3 = t1.ToString();
-                var t4 = t2.ToString();
-
-                Console.WriteLine("Dir: " + path + " " + t3);
-                Console.WriteLine("File: " + zipPath + " " + t4);
-                Console.ReadKey();
                 return true;
             }
 
