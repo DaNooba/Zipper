@@ -19,6 +19,7 @@ namespace DOC_ZIP
         static void Main(string[] args)
         {
             string key;
+            string zip = "zip";
 
             // Load XML
             string xmlPath = @".\config\config.xml";
@@ -48,19 +49,22 @@ namespace DOC_ZIP
                     string DS = zipDirs.ElementAt(index: i);
                     if (Directory.Exists(DS))
                     {
+                        Directory.CreateDirectory(Path.Combine(DS, zip));
                         string[] filesArray = Directory.GetDirectories(DS);
-                        Parallel.ForEach(filesArray, s =>
+                        Parallel.ForEach(filesArray, path =>
                         {
-                            var path = Path.Combine(DS, s);
-                            var zipPath = path + ".zip";
+                            var substr = path.Substring(path.LastIndexOf(@"\") + 1);
+                            string[] paths = {DS, zip, substr};
+                            var tmp = Path.Combine(paths);
+                            var zipPath = Path.ChangeExtension(tmp, ".zip");
 
                             // Check if zip file already exists
-                            if (!File.Exists(zipPath))
+                            if (!File.Exists(zipPath) && path != Path.Combine(DS, zip))
                             {
                                 // Create zip file
                                 ZipFile.CreateFromDirectory(path, zipPath);
                             }
-                            else
+                            else if (path != Path.Combine(DS, zip))
                             {
                                 // Check if the folder has been modified since 
                                 if (CheckFiles(path, zipPath))
